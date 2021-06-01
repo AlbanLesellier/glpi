@@ -1923,6 +1923,17 @@ class Ticket extends CommonITILObject {
               sprintf(__('%s promotes a followup from ticket %s'), $_SESSION["glpiname"], $fup->fields['items_id']));
       }
 
+      if (isset($this->input['_promoted_task_id']) && $this->input['_promoted_task_id'] > 0) {
+         $fup = new TicketTask();
+         $fup->getFromDB($this->input['_promoted_task_id']);
+         $fup->update([
+                         'id'                 => $this->input['_promoted_task_id'],
+                         'sourceof_items_id'  => $this->getID()
+                      ]);
+         Event::log($this->getID(), "ticket", 4, "tracking",
+                    sprintf(__('%s promotes a task from ticket %s'), $_SESSION["glpiname"], $fup->fields['items_id']));
+      }
+
       $this->handleItemsIdInput();
 
       parent::post_addItem();
@@ -4213,6 +4224,20 @@ class Ticket extends CommonITILObject {
             //Allow overriding the default values
             $options['_skip_promoted_fields'] = true;
          }
+
+         if (isset($options['_promoted_task_id']) && !$options['_skip_promoted_fields']) {
+            $tickettask = new TicketTask();
+            if ($tickettask->getFromDB($options['_promoted_task_id'])) {
+               $options['content'] = $tickettask->getField('content');
+               $options['_users_id_requester'] = $tickettask->fields['users_id'];
+               $options['_link'] = [
+                  'link'         => Ticket_Ticket::SON_OF,
+                  'tickets_id_2' => $tickettask->fields['items_id']
+               ];
+            }
+            //Allow overriding the default values
+            $options['_skip_promoted_fields'] = true;
+         }
       }
 
       // Check category / type validity
@@ -4278,6 +4303,9 @@ class Ticket extends CommonITILObject {
 
       if (!isset($options['_promoted_fup_id'])) {
          $options['_promoted_fup_id'] = 0;
+      }
+      if (!isset($options['_promoted_task_id'])) {
+         $options['_promoted_task_id'] = 0;
       }
 
       // Load template if available :
@@ -5023,7 +5051,7 @@ class Ticket extends CommonITILObject {
          } else {
             echo "<div class='tab_bg_2 center'>";
             $add_params = ['name' => 'add'];
-            if ($options['_promoted_fup_id']) {
+            if ($options['_promoted_fup_id'] || $options['_promoted_task_id']) {
                $add_params['confirm'] = __('Confirm the promotion?');
             }
             echo Html::submit(_x('button', 'Add'), $add_params);
@@ -5033,6 +5061,7 @@ class Ticket extends CommonITILObject {
                       value=\"".Toolbox::prepareArrayForInput($predefined_fields)."\">";
             }
             echo Html::hidden('_promoted_fup_id', ['value' => $options['_promoted_fup_id']]);
+            echo Html::hidden('_promoted_task_id', ['value' => $options['_promoted_task_id']]);
             echo Html::hidden('_skip_promoted_fields', ['value' => $options['_skip_promoted_fields']]);
             echo '</div>';
          }
