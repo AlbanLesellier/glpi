@@ -1901,7 +1901,7 @@ class Ticket extends CommonITILObject {
                                 'sourceof_items_id' => $this->getID()
                              ]);
          Event::log($this->getID(), "ticket", 4, "tracking",
-                    sprintf(__('%s promotes a task from ticket %s'), $_SESSION["glpiname"], $tickettask->fields['items_id']));
+                    sprintf(__('%s promotes a task from ticket %s'), $_SESSION["glpiname"], $tickettask->fields['tickets_id']));
       }
 
       // Add linked contract
@@ -4500,7 +4500,7 @@ JAVASCRIPT;
                $options['content'] = $tickettask->getField('content');
                $options['_users_id_requester'] = $tickettask->fields['users_id'];
                $options['_users_id_assign'] = $tickettask->fields['users_id_tech'];
-               $options['_groupd_id_requester'] = $tickettask->fields['groups_id_tech'];
+               $options['_groups_id_assign'] = $tickettask->fields['groups_id_tech'];
                $options['_link'] = [
                   'link'         => Ticket_Ticket::SON_OF,
                   'tickets_id_2' => $tickettask->fields['tickets_id']
